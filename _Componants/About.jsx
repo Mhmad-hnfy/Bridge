@@ -5,7 +5,7 @@ const AboutDrIslam = () => {
     return (
         <section className="py-24 px-6 md:px-12 lg:px-24 xl:px-40">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div className="relative group">
+                <div className="relative group scroll-reveal">
                     <div className="absolute -inset-4 bg-blue-600/10 rounded-[3rem] blur-2xl group-hover:bg-blue-600/20 transition-all duration-500"></div>
                     <div className="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-[2.5rem] shadow-2xl border-8 border-white">
                         <img 
@@ -37,7 +37,7 @@ const AboutDrIslam = () => {
                     </div>
                 </div>
 
-                <div className="flex flex-col">
+                <div className="flex flex-col scroll-reveal" style={{ transitionDelay: '200ms' }}>
                     <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-6 w-fit">
                         <span className="relative flex h-2 w-2">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>

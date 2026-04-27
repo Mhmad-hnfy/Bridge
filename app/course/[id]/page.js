@@ -98,6 +98,8 @@ export default function CourseDetail() {
 
                 if (role === 'admin') {
                     setIsEnrolled(true);
+                } else if (data.isFree) {
+                    setIsEnrolled(true);
                 } else if (unlocked.includes(courseId)) {
                     setIsEnrolled(true);
                 }
@@ -320,21 +322,28 @@ export default function CourseDetail() {
                         <div>
                             <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mb-2">Price</p>
                                     <div className="flex items-center gap-3">
-                                        <span className="text-3xl font-black text-slate-900">{course.price > 0 ? `${course.price} EGP` : 'Free'}</span>
-                                        {course.price > 0 && <span className="text-sm text-slate-400 line-through">199.99 EGP</span>}
+                                        <span className="text-3xl font-black text-slate-900">{(course.isFree || course.price == 0) ? 'Free' : `${course.price} EGP`}</span>
+                                        {!(course.isFree || course.price == 0) && course.price > 0 && <span className="text-sm text-slate-400 line-through">199.99 EGP</span>}
                                     </div>
                         </div>
 
                         <div className="space-y-4">
-                            <button 
-                                onClick={() => setShowRedeemModal(true)}
-                                className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.98]"
-                            >
-                                Enroll with Code
-                            </button>
-                            <Link href="/signup" className="w-full py-5 rounded-2xl bg-slate-900 text-white font-black text-center block hover:bg-slate-800 transition-all">
-                                Buy Online
-                            </Link>
+                            {!(course.isFree || course.price == 0) && (
+                                <div className="space-y-4 animate-fade-in-up">
+                                    <button 
+                                        onClick={() => setShowRedeemModal(true)}
+                                        className="w-full py-5 rounded-2xl bg-blue-600 text-white font-black shadow-xl shadow-blue-600/20 hover:bg-blue-700 transition-all active:scale-[0.98]"
+                                    >
+                                        Enroll with Code
+                                    </button>
+                                </div>
+                            )}
+                            {(course.isFree || course.price == 0) && (
+                                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 text-center animate-zoom-in">
+                                    <p className="text-emerald-600 font-bold text-sm">This course is currently FREE! ✓</p>
+                                    <p className="text-slate-500 text-xs">Enjoy watching all lessons immediately.</p>
+                                </div>
+                            )}
                         </div>
 
                         <div className="space-y-4 pt-8 border-t border-slate-50">
@@ -344,14 +353,12 @@ export default function CourseDetail() {
                                     <span className="text-blue-500 font-bold">✓</span> {course.lessonsCount} HD Video Lessons
                                 </li>
                                 <li className="flex items-center gap-3 text-sm text-slate-600">
-                                    <span className="text-blue-500 font-bold">✓</span> Downloadable Resources
+                                    <span className="text-red-500 font-bold">x</span> Downloadable Resources
                                 </li>
                                 <li className="flex items-center gap-3 text-sm text-slate-600">
                                     <span className="text-blue-500 font-bold">✓</span> Lifetime Access
                                 </li>
-                                <li className="flex items-center gap-3 text-sm text-slate-600">
-                                    <span className="text-blue-500 font-bold">✓</span> Certificate of Completion
-                                </li>
+                                
                             </ul>
                         </div>
                     </div>

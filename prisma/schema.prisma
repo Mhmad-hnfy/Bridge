@@ -19,6 +19,7 @@ model Course {
   image       String?
   level       String   @default("Grade 12")
   status      String   @default("Published")
+  isFree      Boolean  @default(false)
   createdAt   DateTime @default(now())
   lessons     Lesson[]
 }

@@ -15,7 +15,8 @@ export default function AdminDashboard() {
     const [newCodeCount, setNewCodeCount] = useState(1);
     const [newCodeMaxUses, setNewCodeMaxUses] = useState(1);
     const [selectedCourse, setSelectedCourse] = useState('');
-    const [newCourse, setNewCourse] = useState({ title: '', description: '', price: '', level: 'Grade 12', image: '' });
+    const [newCourse, setNewCourse] = useState({ title: '', description: '', price: '', level: 'Grade 12', image: '', isFree: false });
+    const [editingCourseId, setEditingCourseId] = useState(null);
 
     const [students, setStudents] = useState([]);
     const [statsData, setStatsData] = useState([]);
@@ -26,6 +27,12 @@ export default function AdminDashboard() {
     const [lessonSearch, setLessonSearch] = useState('');
     const [studentSearch, setStudentSearch] = useState('');
     const [codeSearch, setCodeSearch] = useState('');
+    const [notification, setNotification] = useState(null);
+
+    const showToast = (message, type = 'success') => {
+        setNotification({ message, type });
+        setTimeout(() => setNotification(null), 4000);
+    };
 
     const fetchData = async () => {
         const [resCourses, resLessons, resStats, resStudents, resLevels] = await Promise.all([
@@ -60,13 +67,13 @@ export default function AdminDashboard() {
             if (res.ok) {
                 setNewLevelName('');
                 fetchData();
-                alert('Level Added Successfully!');
+                showToast('Level Added Successfully!');
             } else {
                 const err = await res.json();
-                alert('Error: ' + (err.error || 'Failed to add level'));
+                showToast(err.error || 'Failed to add level', 'error');
             }
         } catch (error) {
-            alert('Connection Error: ' + error.message);
+            showToast('Connection Error: ' + error.message, 'error');
         }
     };
 
@@ -91,7 +98,7 @@ export default function AdminDashboard() {
 
     const bulkDeleteCodes = async () => {
         const selectedIds = generatedCodes.filter(c => c.selected).map(c => c.id);
-        if (selectedIds.length === 0) return alert('No codes selected');
+        if (selectedIds.length === 0) return showToast('No codes selected', 'error');
         if (window.confirm(`Delete ${selectedIds.length} codes?`)) {
             const res = await fetch(`/api/codes?ids=${selectedIds.join(',')}`, { method: 'DELETE' });
             if (res.ok) fetchCodes();
@@ -112,7 +119,7 @@ export default function AdminDashboard() {
     if (!authorized) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white font-black">Checking Authorization...</div>;
 
     const generateCodes = async () => {
-        if (!selectedCourse) return alert('Please select a course');
+        if (!selectedCourse) return showToast('Please select a course', 'error');
         const res = await fetch('/api/codes', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -120,15 +127,15 @@ export default function AdminDashboard() {
         });
         if (res.ok) {
             fetchCodes();
-            alert(`${newCodeCount} codes generated!`);
+            showToast(`${newCodeCount} codes generated!`);
         } else {
             const err = await res.json();
-            alert('Error Generating Codes: ' + (err.error || 'Unknown error'));
+            showToast('Error Generating Codes: ' + (err.error || 'Unknown error'), 'error');
         }
     };
 
     const handleAddLesson = async () => {
-        if (!newLesson.title || !newLesson.videoUrl || !newLesson.courseId) return alert('Please fill all details and select a course');
+        if (!newLesson.title || !newLesson.videoUrl || !newLesson.courseId) return showToast('Please fill all details', 'error');
         
         const res = await fetch('/api/lessons', {
             method: 'POST',
@@ -140,7 +147,10 @@ export default function AdminDashboard() {
             fetchData();
             setEditingLessonId(null);
             setNewLesson({ title: '', videoUrl: '', maxViews: 3, courseId: newLesson.courseId });
-            alert(editingLessonId ? 'Lesson updated!' : 'Lesson added!');
+            showToast(editingLessonId ? 'Lesson updated!' : 'Lesson added!');
+        } else {
+            const err = await res.json();
+            showToast(err.error || 'Failed to save lesson', 'error');
         }
     };
 
@@ -159,18 +169,31 @@ export default function AdminDashboard() {
     };
 
     const handlePublishCourse = async () => {
-        if (!newCourse.title || !newCourse.price) return alert('Please fill title and price');
+        if (!newCourse.title) return showToast('Please enter a course title', 'error');
+        if (newCourse.price === '' && !newCourse.isFree) return showToast('Please enter a price or mark as free', 'error');
         
         const res = await fetch('/api/courses', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...newCourse, price: parseFloat(newCourse.price) || 0 })
+            body: JSON.stringify({ ...newCourse, id: editingCourseId, price: parseFloat(newCourse.price) || 0 })
         });
+
+        const text = await res.text();
+        let data = {};
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('Non-JSON response:', text);
+        }
 
         if (res.ok) {
             fetchData();
-            alert('Course Published Successfully!');
-            setNewCourse({ title: '', description: '', price: '', level: 'Grade 12', image: '' });
+            showToast(editingCourseId ? 'Course Updated Successfully!' : 'Course Published Successfully!');
+            setNewCourse({ title: '', description: '', price: '', level: 'Grade 12', image: '', isFree: false });
+            setEditingCourseId(null);
+        } else {
+            showToast(data.error || 'Server Error: Please restart your terminal/server.', 'error');
+            if (data.details) console.error('Error Details:', data.details);
         }
     };
 
@@ -313,7 +336,7 @@ export default function AdminDashboard() {
                     {activeTab === 'Courses' && (
                         <div className="space-y-8">
                             <div className="bg-white p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
-                                <h3 className="text-2xl font-black text-slate-900 mb-8">Publish New Course</h3>
+                                <h3 className="text-2xl font-black text-slate-900 mb-8">{editingCourseId ? 'Edit Course' : 'Publish New Course'}</h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                     <div className="space-y-6">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Course Title</label>
@@ -343,11 +366,36 @@ export default function AdminDashboard() {
                                             {newCourse.image && !newCourse.image.startsWith('http') && <img src={newCourse.image} alt="Preview" className="w-16 h-12 rounded-lg object-cover" />}
                                         </div>
                                     </div>
+                                    <div className="space-y-6">
+                                        <label className="block text-sm font-bold text-slate-700 mb-2">Free Course?</label>
+                                        <div className="flex items-center gap-3">
+                                            <button 
+                                                onClick={() => setNewCourse({...newCourse, isFree: !newCourse.isFree})}
+                                                className={`w-14 h-8 rounded-full transition-all relative ${newCourse.isFree ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                                            >
+                                                <div className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-all ${newCourse.isFree ? 'left-7' : 'left-1'}`}></div>
+                                            </button>
+                                            <span className="text-sm font-bold text-slate-600">{newCourse.isFree ? 'Yes, Anyone can watch' : 'No, Requires activation code'}</span>
+                                        </div>
+                                    </div>
                                     <div className="md:col-span-2 space-y-6">
                                         <label className="block text-sm font-bold text-slate-700 mb-2">Description</label>
                                         <textarea placeholder="Write a compelling description for your course..." className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-slate-200 outline-none h-32 focus:border-blue-500 transition-all" value={newCourse.description} onChange={(e) => setNewCourse({...newCourse, description: e.target.value})}></textarea>
                                     </div>
-                                    <button onClick={handlePublishCourse} className="md:col-span-2 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 transition-all active:scale-95">Publish Course</button>
+                                    <button onClick={handlePublishCourse} className="md:col-span-2 py-4 bg-blue-600 hover:bg-blue-700 text-white font-black rounded-2xl shadow-xl shadow-blue-600/20 transition-all active:scale-95">
+                                        {editingCourseId ? 'Update Course' : 'Publish Course'}
+                                    </button>
+                                    {editingCourseId && (
+                                        <button 
+                                            onClick={() => {
+                                                setEditingCourseId(null);
+                                                setNewCourse({ title: '', description: '', price: '', level: 'Grade 12', image: '', isFree: false });
+                                            }}
+                                            className="md:col-span-2 py-2 text-slate-500 font-bold hover:text-slate-900 transition-all"
+                                        >
+                                            Cancel Editing
+                                        </button>
+                                    )}
                                 </div>
                             </div>
 
@@ -364,10 +412,27 @@ export default function AdminDashboard() {
                                             </div>
                                             <div>
                                                 <h4 className="font-bold text-slate-900">{course.title}</h4>
-                                                <p className="text-xs text-slate-500">{course.level} • {course.price} EGP</p>
+                                                <div className="flex items-center gap-2">
+                                                    <p className="text-xs text-slate-500">{course.level} • {course.price} EGP</p>
+                                                    {course.isFree && <span className="bg-emerald-100 text-emerald-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase">Free</span>}
+                                                </div>
                                             </div>
                                         </div>
-                                        <button onClick={() => handleDeleteCourse(course.id)} className="p-3 text-red-500 hover:bg-red-50 rounded-xl">🗑️</button>
+                                        <div className="flex gap-2">
+                                            <button onClick={() => { 
+                                                setEditingCourseId(course.id); 
+                                                setNewCourse({
+                                                    title: course.title,
+                                                    description: course.description || '',
+                                                    price: course.price.toString(),
+                                                    level: course.level,
+                                                    image: course.image || '',
+                                                    isFree: course.isFree || false
+                                                });
+                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                            }} className="p-3 text-blue-600 hover:bg-blue-50 rounded-xl">✏️</button>
+                                            <button onClick={() => handleDeleteCourse(course.id)} className="p-3 text-red-500 hover:bg-red-50 rounded-xl">🗑️</button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -507,7 +572,7 @@ export default function AdminDashboard() {
                                                     <td className="px-8 py-4 text-sm font-bold text-slate-900">{code.usedCount} / {code.maxUses}</td>
                                                     <td className="px-8 py-4"><span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase ${code.status === 'Active' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>{code.status}</span></td>
                                                     <td className="px-8 py-4 text-right">
-                                                        <button onClick={() => { navigator.clipboard.writeText(code.code); alert('Copied!'); }} className="p-2 text-blue-600">📋</button>
+                                                        <button onClick={() => { navigator.clipboard.writeText(code.code); showToast('Copied to clipboard!'); }} className="p-2 text-blue-600">📋</button>
                                                         <button onClick={() => deleteCode(code.id)} className="p-2 text-red-500">🗑️</button>
                                                     </td>
                                                 </tr>
@@ -541,6 +606,21 @@ export default function AdminDashboard() {
 
                 </div>
             </main>
+
+            {/* Notification Toast */}
+            {notification && (
+                <div className={`fixed bottom-8 right-8 z-[100] flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl animate-in slide-in-from-bottom-10 duration-300 backdrop-blur-md border ${
+                    notification.type === 'error' ? 'bg-red-500/90 border-red-400 text-white' : 'bg-emerald-500/90 border-emerald-400 text-white'
+                }`}>
+                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xl">
+                        {notification.type === 'error' ? '✕' : '✓'}
+                    </div>
+                    <div>
+                        <p className="font-black text-sm">{notification.type === 'error' ? 'Error' : 'Success'}</p>
+                        <p className="text-xs font-bold opacity-90">{notification.message}</p>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

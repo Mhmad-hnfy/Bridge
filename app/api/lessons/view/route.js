@@ -9,8 +9,15 @@ export async function GET(request) {
 
         if (!lessonId || !studentId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
 
-        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        const lesson = await prisma.lesson.findUnique({ 
+            where: { id: lessonId },
+            include: { course: true }
+        });
         if (!lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+
+        if (lesson.course.isFree) {
+            return NextResponse.json({ allowed: true, viewsRemaining: 'Unlimited' });
+        }
 
         let progress = await prisma.lessonProgress.findUnique({
             where: { studentId_lessonId: { studentId, lessonId } }
@@ -36,9 +43,16 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+        const lesson = await prisma.lesson.findUnique({ 
+            where: { id: lessonId },
+            include: { course: true }
+        });
         if (!lesson) {
             return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+        }
+
+        if (lesson.course.isFree) {
+            return NextResponse.json({ allowed: true, viewsRemaining: 'Unlimited' });
         }
 
         // Admins might not pass through here, but just in case:

@@ -45,7 +45,8 @@ export default function Cors() {
                 {allCourses.map((course) => (
                     <div 
                         key={course.id} 
-                        className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col group"
+                        className="bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border border-slate-100 flex flex-col group scroll-reveal"
+                        style={{ transitionDelay: `${(courses.indexOf(course) % 3) * 150}ms` }}
                     >
                         <div className="relative overflow-hidden aspect-[16/10]">
                             <img 
@@ -53,9 +54,7 @@ export default function Cors() {
                                 src={course.image || 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=400&auto=format&fit=crop'}
                                 alt={course.title} 
                             />
-                            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur text-blue-600 text-xs font-bold px-4 py-2 rounded-2xl">
-                                {course.category}
-                            </div>
+                            
                         </div>
                         
                         <div className="p-8 flex flex-col flex-grow">
@@ -69,19 +68,17 @@ export default function Cors() {
                             <div className="mt-auto pt-6 border-t border-slate-50 flex flex-col gap-3">
                                 <div className="flex justify-between items-center mb-2">
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xl font-black text-slate-900">{course.price > 0 ? `${course.price} EGP` : 'Free'}</span>
+                                        <span className="text-xl font-black text-slate-900">{(course.isFree || course.price == 0) ? 'Free' : `${course.price} EGP`}</span>
                                     </div>
                                     <span className="text-slate-400 text-sm">{course.lessons?.length || 0} Lessons</span>
                                 </div>
                                 <Link 
                                     href={`/course/${course.id}`}
-                                    className="w-full py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-blue-600 transition-all shadow-lg active:scale-95 text-center block"
+                                    className={`w-full py-4 rounded-2xl font-bold transition-all shadow-lg active:scale-95 text-center block ${ (course.isFree || course.price == 0) ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-slate-900 text-white hover:bg-blue-600'}`}
                                 >
-                                    Enroll with Code
+                                    {(course.isFree || course.price == 0) ? 'Watch Now' : 'Enroll with Code'}
                                 </Link>
-                                <Link href="/signup" className="w-full py-3 text-center text-slate-500 text-sm font-bold hover:text-slate-900 transition-colors">
-                                    Or Pay Online
-                                </Link>
+                                
                             </div>
                         </div>
                     </div>
