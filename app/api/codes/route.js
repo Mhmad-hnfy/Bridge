@@ -1,13 +1,17 @@
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
     try {
-        const codes = await prisma.activationCode.findMany({
-            orderBy: { createdAt: 'desc' }
-        });
+        const { data: codes, error } = await supabase
+            .from('ActivationCode')
+            .select('*')
+            .order('createdAt', { ascending: false });
+            
+        if (error) throw error;
         return NextResponse.json(codes);
     } catch (error) {
+        console.error("FETCH CODES ERROR:", error);
         return NextResponse.json({ error: 'Failed to fetch codes' }, { status: 500 });
     }
 }
@@ -19,8 +23,13 @@ export async function POST(request) {
         
         if (!courseId) return NextResponse.json({ error: 'Course ID required' }, { status: 400 });
 
-        const course = await prisma.course.findUnique({ where: { id: courseId } });
-        if (!course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
+        const { data: course, error: courseError } = await supabase
+            .from('Course')
+            .select('*')
+            .eq('id', courseId)
+            .single();
+            
+        if (courseError || !course) return NextResponse.json({ error: 'Course not found' }, { status: 404 });
 
         const newCodes = [];
         for (let i = 0; i < (count || 1); i++) {
@@ -30,15 +39,18 @@ export async function POST(request) {
                 courseId: course.id,
                 course: course.title,
                 status: 'Active',
-                maxUses: parseInt(maxUses) || 1
+                maxUses: parseInt(maxUses) || 1,
+                usedBy: '[]'
             });
         }
 
-        await prisma.activationCode.createMany({ data: newCodes });
+        const { error: insertError } = await supabase.from('ActivationCode').insert(newCodes);
+        if (insertError) throw insertError;
+        
         return NextResponse.json({ success: true, count: newCodes.length });
     } catch (error) {
-        console.error(error);
-        return NextResponse.json({ error: 'DB Error: ' + error.message + '. Try running "npx prisma generate" while the server is OFF.' }, { status: 500 });
+        console.error("GENERATE CODES ERROR:", error);
+        return NextResponse.json({ error: 'Failed to generate codes: ' + error.message }, { status: 500 });
     }
 }
 
@@ -47,62 +59,65 @@ export async function PUT(request) {
     try {
         const { code, courseId, studentId } = await request.json();
         
-        const validCode = await prisma.activationCode.findFirst({
-            where: { code, courseId }
-        });
+        const { data: validCode, error: fetchError } = await supabase
+            .from('ActivationCode')
+            .select('*')
+            .eq('code', code)
+            .eq('courseId', courseId)
+            .single();
 
         if (validCode) {
-            // 1. Check if course matches (already handled by findFirst but double check for safety)
-            if (validCode.courseId !== courseId) {
-                return NextResponse.json({ error: 'This code is for a different course.' }, { status: 400 });
-            }
-
-            // 2. Check if usage limit reached
+            // Check usage limit
             if (validCode.usedCount >= validCode.maxUses) {
                 return NextResponse.json({ error: 'This code has reached its maximum usage limit.' }, { status: 400 });
             }
 
-            // 3. Check if THIS student already used THIS code
+            // Check if THIS student already used THIS code
             const usedByArr = JSON.parse(validCode.usedBy || '[]');
-            if (usedByArr.includes(studentId)) {
-                // If they already used it, just return success (re-unlock logic) 
-                // But wait, the user wants them to be able to use a NEW code to reset views.
-                // If they are entering the SAME code again, we don't increment usedCount but we still reset views?
-                // Actually, if they are entering a code, they expect it to work.
-            } else {
+            if (!usedByArr.includes(studentId)) {
                 // New student using this code
                 usedByArr.push(studentId);
-                await prisma.activationCode.update({
-                    where: { id: validCode.id },
-                    data: { 
+                const { error: updateError } = await supabase
+                    .from('ActivationCode')
+                    .update({ 
                         usedCount: validCode.usedCount + 1,
                         usedBy: JSON.stringify(usedByArr),
                         status: (validCode.usedCount + 1) >= validCode.maxUses ? 'Used' : 'Active'
-                    }
-                });
+                    })
+                    .eq('id', validCode.id);
+                
+                if (updateError) throw updateError;
             }
 
             // Add course to student's unlocked list
-            const student = await prisma.student.findUnique({ where: { id: studentId } });
+            const { data: student, error: studentError } = await supabase
+                .from('Student')
+                .select('*')
+                .eq('id', studentId)
+                .single();
+                
             if (student) {
                 const unlocked = JSON.parse(student.unlockedCourses || '[]');
                 if (!unlocked.includes(courseId)) {
                     unlocked.push(courseId);
-                    await prisma.student.update({
-                        where: { id: studentId },
-                        data: { unlockedCourses: JSON.stringify(unlocked) }
-                    });
+                    await supabase
+                        .from('Student')
+                        .update({ unlockedCourses: JSON.stringify(unlocked) })
+                        .eq('id', studentId);
                 }
 
                 // RESET VIEWS: If they redeem a code, reset their progress for all lessons in this course
-                const lessons = await prisma.lesson.findMany({ where: { courseId } });
+                const { data: lessons } = await supabase
+                    .from('Lesson')
+                    .select('id')
+                    .eq('courseId', courseId);
+                
                 const lessonIds = lessons.map(l => l.id);
-                await prisma.lessonProgress.deleteMany({
-                    where: {
-                        studentId: studentId,
-                        lessonId: { in: lessonIds }
-                    }
-                });
+                await supabase
+                    .from('LessonProgress')
+                    .delete()
+                    .eq('studentId', studentId)
+                    .in('lessonId', lessonIds);
             }
 
             return NextResponse.json({ success: true });
@@ -110,6 +125,7 @@ export async function PUT(request) {
             return NextResponse.json({ error: 'Invalid or already used code' }, { status: 400 });
         }
     } catch (error) {
+        console.error("REDEEM CODE ERROR:", error);
         return NextResponse.json({ error: 'Validation failed' }, { status: 500 });
     }
 }
@@ -121,27 +137,17 @@ export async function DELETE(request) {
         const ids = searchParams.get('ids')?.split(',');
 
         if (id) {
-            // Delete single and potentially relock for student
-            const code = await prisma.activationCode.findUnique({ where: { id } });
-            if (code && code.studentId && code.status === 'Used') {
-                const student = await prisma.student.findUnique({ where: { id: code.studentId } });
-                if (student) {
-                    let unlocked = JSON.parse(student.unlockedCourses || '[]');
-                    unlocked = unlocked.filter(cId => cId !== code.courseId);
-                    await prisma.student.update({
-                        where: { id: code.studentId },
-                        data: { unlockedCourses: JSON.stringify(unlocked) }
-                    });
-                }
-            }
-            await prisma.activationCode.delete({ where: { id } });
+            const { error } = await supabase.from('ActivationCode').delete().eq('id', id);
+            if (error) throw error;
         } else if (ids) {
-            // Bulk delete
-            await prisma.activationCode.deleteMany({ where: { id: { in: ids } } });
+            const { error } = await supabase.from('ActivationCode').delete().in('id', ids);
+            if (error) throw error;
         }
 
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error("DELETE CODES ERROR:", error);
         return NextResponse.json({ error: 'Delete failed' }, { status: 500 });
     }
 }
+

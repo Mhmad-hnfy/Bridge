@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
@@ -9,19 +9,24 @@ export async function GET(request) {
 
         if (!lessonId || !studentId) return NextResponse.json({ error: 'Missing params' }, { status: 400 });
 
-        const lesson = await prisma.lesson.findUnique({ 
-            where: { id: lessonId },
-            include: { course: true }
-        });
-        if (!lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
+        const { data: lesson, error: lessonError } = await supabase
+            .from('Lesson')
+            .select('*, course:Course(*)')
+            .eq('id', lessonId)
+            .single();
+            
+        if (lessonError || !lesson) return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
 
         if (lesson.course.isFree) {
             return NextResponse.json({ allowed: true, viewsRemaining: 'Unlimited' });
         }
 
-        let progress = await prisma.lessonProgress.findUnique({
-            where: { studentId_lessonId: { studentId, lessonId } }
-        });
+        const { data: progress } = await supabase
+            .from('LessonProgress')
+            .select('*')
+            .eq('studentId', studentId)
+            .eq('lessonId', lessonId)
+            .single();
 
         const viewsUsed = progress?.viewsUsed || 0;
         const allowed = lesson.maxViews === 0 || viewsUsed < lesson.maxViews;
@@ -31,6 +36,7 @@ export async function GET(request) {
             viewsRemaining: lesson.maxViews > 0 ? lesson.maxViews - viewsUsed : 'Unlimited' 
         });
     } catch (error) {
+        console.error("VIEW CHECK ERROR:", error);
         return NextResponse.json({ error: 'Check failed' }, { status: 500 });
     }
 }
@@ -43,11 +49,13 @@ export async function POST(request) {
             return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
         }
 
-        const lesson = await prisma.lesson.findUnique({ 
-            where: { id: lessonId },
-            include: { course: true }
-        });
-        if (!lesson) {
+        const { data: lesson, error: lessonError } = await supabase
+            .from('Lesson')
+            .select('*, course:Course(*)')
+            .eq('id', lessonId)
+            .single();
+            
+        if (lessonError || !lesson) {
             return NextResponse.json({ error: 'Lesson not found' }, { status: 404 });
         }
 
@@ -55,23 +63,17 @@ export async function POST(request) {
             return NextResponse.json({ allowed: true, viewsRemaining: 'Unlimited' });
         }
 
-        // Admins might not pass through here, but just in case:
-        // Actually, admins don't have studentId, or their role bypasses this.
-        
-        if (!prisma.lessonProgress) {
-            return NextResponse.json({ error: 'System Error: Database client needs a restart. Please restart the server.' }, { status: 500 });
-        }
-
-        let progress = await prisma.lessonProgress.findUnique({
-            where: {
-                studentId_lessonId: { studentId, lessonId }
-            }
-        });
+        let { data: progress } = await supabase
+            .from('LessonProgress')
+            .select('*')
+            .eq('studentId', studentId)
+            .eq('lessonId', lessonId)
+            .single();
 
         if (progress) {
             // GRACE PERIOD: If viewed in the last 10 minutes, don't count as a new view
             const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
-            if (progress.updatedAt > tenMinutesAgo) {
+            if (new Date(progress.updatedAt) > tenMinutesAgo) {
                 return NextResponse.json({ allowed: true, viewsRemaining: lesson.maxViews > 0 ? lesson.maxViews - progress.viewsUsed : 'Unlimited' });
             }
 
@@ -80,23 +82,36 @@ export async function POST(request) {
             }
             
             // Increment views
-            progress = await prisma.lessonProgress.update({
-                where: { id: progress.id },
-                data: { viewsUsed: progress.viewsUsed + 1 }
-            });
+            const { data: updatedProgress, error: updateError } = await supabase
+                .from('LessonProgress')
+                .update({ 
+                    viewsUsed: progress.viewsUsed + 1,
+                    updatedAt: new Date().toISOString()
+                })
+                .eq('id', progress.id)
+                .select()
+                .single();
+            
+            if (updateError) throw updateError;
+            progress = updatedProgress;
         } else {
             // First view
             if (lesson.maxViews > 0 && 0 >= lesson.maxViews) {
                  return NextResponse.json({ allowed: false, message: 'Lesson has 0 max views allowed.' });
             }
 
-            progress = await prisma.lessonProgress.create({
-                data: {
+            const { data: newProgress, error: insertError } = await supabase
+                .from('LessonProgress')
+                .insert([{
                     studentId,
                     lessonId,
                     viewsUsed: 1
-                }
-            });
+                }])
+                .select()
+                .single();
+            
+            if (insertError) throw insertError;
+            progress = newProgress;
         }
 
         return NextResponse.json({ allowed: true, viewsRemaining: lesson.maxViews > 0 ? lesson.maxViews - progress.viewsUsed : 'Unlimited' });
@@ -105,3 +120,4 @@ export async function POST(request) {
         return NextResponse.json({ error: 'Database Error: ' + error.message }, { status: 500 });
     }
 }
+

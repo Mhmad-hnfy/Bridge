@@ -1,12 +1,13 @@
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function POST(request) {
     try {
         const { email, password } = await request.json();
-        console.log('Login attempt for:', email);
+        const normalizedEmail = email.trim().toLowerCase();
+        console.log('Login attempt for:', normalizedEmail);
 
-        if (email === 'admin@drislam.com' && password === 'admin123') {
+        if (normalizedEmail === 'admin@drislam.com' && password === 'admin123') {
             return NextResponse.json({ 
                 success: true, 
                 role: 'admin', 
@@ -15,9 +16,11 @@ export async function POST(request) {
         }
 
         // Check if admin in DB
-        const admin = await prisma.admin.findUnique({
-            where: { email: email.trim().toLowerCase() }
-        });
+        const { data: admin } = await supabase
+            .from('Admin')
+            .select('*')
+            .eq('email', normalizedEmail)
+            .single();
 
         if (admin) {
             console.log('Admin found in DB:', admin.email);
@@ -33,9 +36,11 @@ export async function POST(request) {
         }
 
         // Check if student
-        const student = await prisma.student.findUnique({
-            where: { email: email.trim().toLowerCase() }
-        });
+        const { data: student } = await supabase
+            .from('Student')
+            .select('*')
+            .eq('email', normalizedEmail)
+            .single();
 
         if (student && student.password === password) {
             return NextResponse.json({ 
@@ -47,6 +52,8 @@ export async function POST(request) {
 
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     } catch (error) {
+        console.error("LOGIN ERROR:", error);
         return NextResponse.json({ error: 'Login failed' }, { status: 500 });
     }
 }
+

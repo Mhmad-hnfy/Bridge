@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/prisma';
+import { supabase } from '@/lib/supabase';
 import { NextResponse } from 'next/server';
 
 export async function GET(request) {
@@ -7,17 +7,23 @@ export async function GET(request) {
 
     try {
         if (id) {
-            const course = await prisma.course.findUnique({
-                where: { id },
-                include: { lessons: true }
-            });
+            const { data: course, error } = await supabase
+                .from('Course')
+                .select('*, lessons:Lesson(*)')
+                .eq('id', id)
+                .single();
+            
+            if (error) throw error;
             return NextResponse.json(course);
         }
-        const courses = await prisma.course.findMany({
-            include: { lessons: true }
-        });
+        const { data: courses, error } = await supabase
+            .from('Course')
+            .select('*, lessons:Lesson(*)');
+        
+        if (error) throw error;
         return NextResponse.json(courses);
     } catch (error) {
+        console.error("FETCH COURSES ERROR:", error);
         return NextResponse.json({ error: 'Failed to fetch courses' }, { status: 500 });
     }
 }
@@ -31,39 +37,37 @@ export async function POST(request) {
         const parsedPrice = isFreeCourse ? 0 : (parseFloat(price) || 0);
 
         if (id) {
-            // Update existing using Raw SQL to bypass client lock
-            await prisma.$executeRawUnsafe(
-                `UPDATE Course SET title = ?, description = ?, price = ?, level = ?, image = ?, isFree = ? WHERE id = ?`,
-                title, description || '', parsedPrice, level, image || '', isFreeCourse ? 1 : 0, id
-            );
+            const { data: course, error } = await supabase
+                .from('Course')
+                .update({
+                    title,
+                    description: description || '',
+                    price: parsedPrice,
+                    level,
+                    image: image || '',
+                    isFree: isFreeCourse
+                })
+                .eq('id', id)
+                .select()
+                .single();
             
-            // Fetch updated course using RAW SQL to bypass client model validation
-            const courses = await prisma.$queryRawUnsafe(`SELECT * FROM Course WHERE id = ?`, id);
-            const course = courses[0];
-            
-            if (course) {
-                // Important: SQLite raw queries return BigInts which fail JSON serialization
-                for (let key in course) {
-                    if (typeof course[key] === 'bigint') course[key] = Number(course[key]);
-                }
-            }
-            
+            if (error) throw error;
             return NextResponse.json(course);
         } else {
-            // Create new using Raw SQL to bypass client lock
-            const newId = 'c' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            await prisma.$executeRawUnsafe(
-                `INSERT INTO Course (id, title, description, price, level, image, isFree) VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                newId, title, description || '', parsedPrice, level, image || '', isFreeCourse ? 1 : 0
-            );
+            const { data: course, error } = await supabase
+                .from('Course')
+                .insert([{
+                    title,
+                    description: description || '',
+                    price: parsedPrice,
+                    level,
+                    image: image || '',
+                    isFree: isFreeCourse
+                }])
+                .select()
+                .single();
             
-            const courses = await prisma.$queryRawUnsafe(`SELECT * FROM Course WHERE id = ?`, newId);
-            const course = courses[0];
-            if (course) {
-                for (let key in course) {
-                    if (typeof course[key] === 'bigint') course[key] = Number(course[key]);
-                }
-            }
+            if (error) throw error;
             return NextResponse.json(course);
         }
     } catch (error) {
@@ -78,12 +82,15 @@ export async function DELETE(request) {
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        // Delete associated lessons first (or let Prisma handle if cascade is set)
-        await prisma.lesson.deleteMany({ where: { courseId: id } });
-        await prisma.course.delete({ where: { id } });
+        // Delete associated lessons first if not handled by CASCADE
+        await supabase.from('Lesson').delete().eq('courseId', id);
+        const { error } = await supabase.from('Course').delete().eq('id', id);
         
+        if (error) throw error;
         return NextResponse.json({ success: true });
     } catch (error) {
+        console.error("DELETE COURSE ERROR:", error);
         return NextResponse.json({ error: 'Failed to delete course' }, { status: 500 });
     }
 }
+
