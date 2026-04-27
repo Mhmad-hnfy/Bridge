@@ -1,4 +1,5 @@
 "use client";
+import Link from 'next/link';
 import React from 'react';
 
 const AboutDrIslam = () => {
@@ -74,11 +75,12 @@ const AboutDrIslam = () => {
                             </div>
                         </div>
                     </div>
-
-                    <button className="w-fit px-10 py-5 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 hover:-translate-y-1 active:scale-95 flex items-center gap-3">
-                        Join My Academy
-                        <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    </button>
+                    <Link href="/signup">
+                        <button className="w-fit px-10 py-5 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-xl shadow-blue-600/30 hover:-translate-y-1 active:scale-95 flex items-center gap-3">
+                            Join My Academy
+                            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </button>
+                    </Link>
                 </div>
             </div>
         </section>
