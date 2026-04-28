@@ -4,62 +4,60 @@ import { useEffect } from "react";
 
 export default function SecurityProvider() {
   useEffect(() => {
-    // Disable right-click
-    const handleContextMenu = (e) => {
+    // 1. Disable right-click completely
+    const handleContextMenu = (e) => e.preventDefault();
+
+    // 2. Disable Copy, Cut, and Paste
+    const handleCopy = (e) => {
       e.preventDefault();
+      // alert("Copying content is strictly prohibited!");
     };
+    const handleCut = (e) => e.preventDefault();
+    const handlePaste = (e) => e.preventDefault();
 
-    // Disable dragging of images/videos
+    // 3. Disable dragging of images/videos
     const handleDragStart = (e) => {
-      if (e.target.tagName === "IMG" || e.target.tagName === "VIDEO") {
+      if (e.target.tagName === "IMG" || e.target.tagName === "VIDEO" || e.target.tagName === "IFRAME") {
         e.preventDefault();
       }
     };
 
-    // Disable keyboard shortcuts for DevTools and common save/print
+    // 4. Advanced Keyboard Shortcut Blocking
     const handleKeyDown = (e) => {
-      // F12
-      if (e.keyCode === 123) {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-      if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Ctrl+U (View Source)
-      if (e.ctrlKey && e.keyCode === 85) {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+S (Save)
-      if (e.ctrlKey && e.keyCode === 83) {
-        e.preventDefault();
-        return false;
-      }
-
-      // Ctrl+P (Print)
-      if (e.ctrlKey && e.keyCode === 80) {
+      // F12, Ctrl+Shift+I, J, C, U, S, P
+      const forbiddenKeys = [123, 73, 74, 67, 85, 83, 80];
+      if (
+        forbiddenKeys.includes(e.keyCode) || 
+        (e.ctrlKey && forbiddenKeys.includes(e.keyCode)) ||
+        (e.ctrlKey && e.shiftKey && [73, 74, 67].includes(e.keyCode))
+      ) {
         e.preventDefault();
         return false;
       }
     };
 
-    // Debugger loop to disrupt DevTools usage
+    // 5. Extreme DevTools Detection (Disruptive)
     const devToolsCheck = setInterval(() => {
-      const before = new Date().getTime();
-      debugger;
-      const after = new Date().getTime();
-      if (after - before > 100) {
-        // DevTools likely open
-      }
-    }, 1000);
+      // The debugger trap
+      (function() {
+        (function a() {
+          try {
+            (function b(i) {
+              if (("" + i / i).length !== 1 || i % 20 === 0) {
+                (function() {}.constructor("debugger")());
+              } else {
+                debugger;
+              }
+              b(++i);
+            })(0);
+          } catch (e) {
+            setTimeout(a, 5000);
+          }
+        })();
+      })();
+    }, 500);
 
-    // Inject global CSS to disable selection
+    // 6. Inject Ultra-Aggressive CSS
     const style = document.createElement("style");
     style.innerHTML = `
       * {
@@ -68,6 +66,8 @@ export default function SecurityProvider() {
         -ms-user-select: none !important;
         user-select: none !important;
         -webkit-user-drag: none !important;
+        user-drag: none !important;
+        -webkit-touch-callout: none !important;
       }
       input, textarea {
         -webkit-user-select: text !important;
@@ -75,17 +75,26 @@ export default function SecurityProvider() {
         -ms-user-select: text !important;
         user-select: text !important;
       }
+      /* Prevent iframe selection/interaction if needed */
+      iframe { pointer-events: auto; }
     `;
     document.head.appendChild(style);
 
+    // Attach listeners
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("dragstart", handleDragStart);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("cut", handleCut);
+    document.addEventListener("paste", handlePaste);
 
     return () => {
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("dragstart", handleDragStart);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("cut", handleCut);
+      document.removeEventListener("paste", handlePaste);
       clearInterval(devToolsCheck);
       document.head.removeChild(style);
     };
