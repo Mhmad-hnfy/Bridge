@@ -18,6 +18,7 @@ export const metadata = {
 
 import MathBackground from "@/_Componants/MathBackground";
 import ScrollReveal from "@/_Componants/ScrollReveal";
+import SecurityProvider from "@/_Componants/SecurityProvider";
 
 export default function RootLayout({ children }) {
   return (
@@ -27,6 +28,7 @@ export default function RootLayout({ children }) {
     >
       <body className="min-h-full flex flex-col relative bg-white">
         <div className="fixed inset-0 bg-slate-50/50 z-0"></div>
+        <SecurityProvider />
         <MathBackground />
         <ScrollReveal />
         <div className="relative z-10 flex-grow">
