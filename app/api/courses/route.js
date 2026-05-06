@@ -8,6 +8,9 @@ export async function GET(request) {
     const id = searchParams.get('id');
 
     try {
+        if (!supabase) {
+            return NextResponse.json({ error: 'Supabase client not initialized. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to Vercel environment variables.' }, { status: 500 });
+        }
         if (id) {
             const { data: course, error } = await supabase
                 .from('Course')
