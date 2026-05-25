@@ -5,7 +5,7 @@ import Link from "next/link";
 const Slider = () => {
   const slides = [
     {
-      image: "/math-hero.png",
+      image: "/Hanafy.jpg",
       title: "Master Mathematics with Eng: Mohamed Hanafy",
       description:
         "Unlock the secrets of Calculus, Algebra, and Geometry with expert guidance.",
@@ -17,7 +17,7 @@ const Slider = () => {
         "Join thousands of students who have mastered complex math concepts with ease.",
     },
     {
-      image: "/Hanafy.jpg",
+      image: "/math-hero.png",
       title: "Experience the Best Learning",
       description:
         "Specialized math curriculum designed for high school and university levels.",
@@ -57,10 +57,10 @@ const Slider = () => {
             <p className="text-slate-200 text-lg md:text-2xl max-w-xl mb-10 leading-relaxed">
               {slide.description}
             </p>
-            <div className="flex gap-4">
+            <div className="flex gap-4 pb-12">
               <Link
                 href="/signup"
-                className="px-8 py-4 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/30 hover:-translate-y-1"
+                className="px-8 py-4 pb- bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/30 hover:-translate-y-1"
               >
                 Start Learning
               </Link>
