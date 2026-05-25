@@ -19,6 +19,7 @@ export const metadata = {
 import MathBackground from "@/_Componants/MathBackground";
 import ScrollReveal from "@/_Componants/ScrollReveal";
 import SecurityProvider from "@/_Componants/SecurityProvider";
+import Footer from "@/_Componants/Footer";
 
 export default function RootLayout({ children }) {
   return (
@@ -34,6 +35,7 @@ export default function RootLayout({ children }) {
         <div className="relative z-10 flex-grow">
           {children}
         </div>
+        <Footer />
       </body>
     </html>
   );

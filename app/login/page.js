@@ -25,7 +25,7 @@ export default function LoginPage() {
                             <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 font-black text-xl">
                                 Σ
                             </div>
-                            <span className="text-2xl font-black tracking-tight">DR. ISLAM</span>
+                            <span className="text-2xl font-black tracking-tight">ENG:MOHAMED HANAFY</span>
                         </Link>
                         
                         <h2 className="text-4xl font-black leading-tight mb-6">

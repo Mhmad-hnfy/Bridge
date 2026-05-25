@@ -42,7 +42,7 @@ const Header = () => {
                         <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-blue-600/20">
                             Σ
                         </div>
-                        <span className="text-2xl font-black text-slate-900 tracking-tight">DR. <span className="text-blue-600">ISLAM</span></span>
+                        <span className="text-2xl font-black text-slate-900 tracking-tight">Eng:<span className="text-blue-600">Mohamed Hanafy</span></span>
                     </Link>
                 </div>
 

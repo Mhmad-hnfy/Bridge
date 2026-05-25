@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import React from 'react';
 
-const AboutDrIslam = () => {
+const AboutEngMohamedHanafy = () => {
     return (
         <section className="py-24 px-6 md:px-12 lg:px-24 xl:px-40">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -10,8 +10,8 @@ const AboutDrIslam = () => {
                     <div className="absolute -inset-4 bg-blue-600/10 rounded-[3rem] blur-2xl group-hover:bg-blue-600/20 transition-all duration-500"></div>
                     <div className="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-[2.5rem] shadow-2xl border-8 border-white">
                         <img 
-                            src="/dr-islam.jpg" 
-                            alt="Dr. Islam - Math Expert" 
+                            src="/Hanafy.jpg" 
+                            alt="Eng: Mohamed Hanafy - Math Expert" 
                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-blue-900/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -52,7 +52,7 @@ const AboutDrIslam = () => {
                     </h2>
                     
                     <p className="text-slate-600 text-lg md:text-xl leading-relaxed mb-8">
-                        Dr. Islam is not just a teacher; he's a mentor dedicated to simplifying the most complex mathematical theories. With a unique methodology that focuses on conceptual clarity, he has helped thousands of students overcome their math phobias and excel in their academic journey.
+                        Eng: Mohamed Hanafy is not just a teacher; he's a mentor dedicated to simplifying the most complex mathematical theories. With a unique methodology that focuses on conceptual clarity, he has helped thousands of students overcome their math phobias and excel in their academic journey.
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
@@ -87,4 +87,4 @@ const AboutDrIslam = () => {
     );
 };
 
-export default AboutDrIslam;
+export default AboutEngMohamedHanafy;

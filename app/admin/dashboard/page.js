@@ -260,7 +260,7 @@ export default function AdminDashboard() {
                     <div className="bg-slate-800 rounded-2xl p-4 flex items-center gap-4">
                         <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">I</div>
                         <div>
-                            <p className="text-sm font-bold text-white">Dr. Islam</p>
+                            <p className="text-sm font-bold text-white">Eng:Mohamed Hanafy</p>
                             <p className="text-xs text-slate-500">Super Admin</p>
                         </div>
                         <button onClick={handleLogout} className="ml-auto text-slate-500 hover:text-white">🚪</button>

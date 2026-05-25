@@ -7,7 +7,7 @@ const mathCourses = [
     {
         id: 1,
         title: "Calculus Mastery",
-        instructor: "Dr. Islam",
+        instructor: "Eng:Mohamed Hanafy",
         price: 49.99,
         description: "Master limits, derivatives, and integrals with practical problem-solving sessions. This course is designed to take you from the basics of functions to advanced integration techniques used in engineering and physics.",
         image: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb?q=80&w=1200&auto=format&fit=crop",
@@ -25,7 +25,7 @@ const mathCourses = [
     {
         id: 2,
         title: "Advanced Algebra",
-        instructor: "Dr. Islam",
+        instructor: "Eng:Mohamed Hanafy",
         price: 39.00,
         description: "Deep dive into linear equations, complex numbers, and polynomial functions. We focus on building a strong logical foundation for algebraic manipulation.",
         image: "https://images.unsplash.com/photo-1509228468518-180dd482180c?q=80&w=1200&auto=format&fit=crop",
@@ -41,7 +41,7 @@ const mathCourses = [
     {
         id: 3,
         title: "Geometry & Trigonometry",
-        instructor: "Dr. Islam",
+        instructor: "Eng:Mohamed Hanafy",
         price: 35.00,
         description: "Explore the world of shapes, angles, and trigonometric identities in depth. Perfect for students aiming for architectural or geometric excellence.",
         image: "https://images.unsplash.com/photo-1632571401005-458b9d244391?q=80&w=1200&auto=format&fit=crop",
@@ -259,7 +259,7 @@ export default function CourseDetail() {
                             <div className="flex items-center gap-6 text-white/80">
                                 <div className="flex items-center gap-2">
                                     <span className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold">I</span>
-                                    <span className="font-bold">Dr. Islam</span>
+                                    <span className="font-bold">Eng:Mohamed Hanafy</span>
                                 </div>
                                 <div className="h-4 w-px bg-white/20"></div>
                                 <div className="flex items-center gap-2 text-emerald-400 font-bold">

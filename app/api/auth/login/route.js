@@ -13,7 +13,7 @@ export async function POST(request) {
             return NextResponse.json({ 
                 success: true, 
                 role: 'admin', 
-                user: { name: 'Dr. Islam (Backup)', email: 'admin@drislam.com' } 
+                user: { name: 'Eng:Mohamed Hanafy (Backup)', email: 'admin@drislam.com' } 
             });
         }
 

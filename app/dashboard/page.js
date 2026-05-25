@@ -133,7 +133,7 @@ export default function StudentDashboard() {
                         <div className="bg-white rounded-[2rem] p-12 text-center border border-slate-100 shadow-sm">
                             <div className="text-6xl mb-4">📚</div>
                             <h3 className="text-xl font-bold text-slate-900 mb-2">No courses unlocked yet</h3>
-                            <p className="text-slate-500 max-w-md mx-auto">Use an activation code from Dr. Islam to unlock your courses and start learning.</p>
+                            <p className="text-slate-500 max-w-md mx-auto">Use an activation code from Eng:Mohamed Hanafy to unlock your courses and start learning.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

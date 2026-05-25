@@ -36,7 +36,7 @@ export default function Cors() {
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-slate-900 text-center mb-4">Mathematics Curriculum</h2>
                 <p className="text-slate-500 text-center max-w-2xl text-lg">
-                    Join Dr. Islam's specialized courses designed to simplify complex math.
+                    Join Eng:Mohamed Hanafy's specialized courses designed to simplify complex math.
                 </p>
                 <div className="w-24 h-1.5 bg-blue-600 mt-8 rounded-full"></div>
             </div>

@@ -6,7 +6,7 @@ const Slider = () => {
   const slides = [
     {
       image: "/math-hero.png",
-      title: "Master Mathematics with Dr. Islam",
+      title: "Master Mathematics with Eng: Mohamed Hanafy",
       description:
         "Unlock the secrets of Calculus, Algebra, and Geometry with expert guidance.",
     },
@@ -17,7 +17,7 @@ const Slider = () => {
         "Join thousands of students who have mastered complex math concepts with ease.",
     },
     {
-      image: "/dr-islam.jpg",
+      image: "/Hanafy.jpg",
       title: "Experience the Best Learning",
       description:
         "Specialized math curriculum designed for high school and university levels.",

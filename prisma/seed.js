@@ -7,7 +7,7 @@ async function main() {
     update: {},
     create: {
       email: 'admin@drislam.com',
-      name: 'Dr. Islam',
+      name: 'Eng:Mohamed Hanafy',
       password: 'admin123', // In a real app, this should be hashed
     },
   })
